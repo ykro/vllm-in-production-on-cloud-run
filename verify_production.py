@@ -1,4 +1,4 @@
-"""The Outside Judge for C5: runs the five experiments once and checks what must hold.
+"""The Outside Judge for vLLM in production on Cloud Run: runs the five experiments once and checks what must hold.
 
     python verify_production.py          # live vLLM on Cloud Run through the tunnel
     python verify_production.py --mock   # fake service, checks the logic without a GPU

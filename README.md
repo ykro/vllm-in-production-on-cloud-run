@@ -1,9 +1,9 @@
 # vLLM en Producción sobre Cloud Run: Cold Start, Métricas, Autoscaling y Costo Real
 
 - **Por qué es relevante:** levantar `vllm serve` una vez es la parte fácil. Dejarlo corriendo para otras personas pide responder cuatro preguntas que una demo esconde: cuánto tarda en arrancar una instancia nueva, cómo sabe Cloud Run que ya está lista, qué números mirar mientras atiende tráfico y cuánto cuesta cada millón de tokens comparado con pagar una API. Este repo responde las cuatro con mediciones.
-- **Para quién es:** desarrolladores que saben Python, ya llamaron alguna API de IA y ya levantaron su primer servidor con Gemma en C1. No hace falta JAX ni PyTorch.
+- **Para quién es:** desarrolladores que saben Python, ya llamaron alguna API de IA y ya levantaron su primer servidor con Gemma en [Tu primer servidor vLLM con Gemma](https://github.com/ykro/first-vllm-server-with-gemma). No hace falta JAX ni PyTorch.
 - **Quién debería verlo:** quien tiene que decidir entre servir un modelo abierto propio y pagar por token a un proveedor, o quien ya lo sirve y quiere saber por qué la primera petición del día tarda minutos.
-- **Serie completa:** quinta unidad de la Serie C (servir modelos abiertos con vLLM). Antes van [C1 · Tu primer servidor vLLM con Gemma](https://github.com/ykro/first-vllm-server-with-gemma) y el índice de la serie, [vLLM for Software Devs Field Guide](https://github.com/ykro/vllm-for-software-devs-field-guide).
+- **Serie completa:** quinta unidad del Field Guide de vLLM (servir modelos abiertos con vLLM). Antes van [Tu primer servidor vLLM con Gemma](https://github.com/ykro/first-vllm-server-with-gemma) y el índice, [vLLM for Software Devs Field Guide](https://github.com/ykro/vllm-for-software-devs-field-guide).
 
 La pregunta de esta unidad: **¿cuánto cuesta de verdad, y qué hace falta para dejarlo corriendo?**
 
