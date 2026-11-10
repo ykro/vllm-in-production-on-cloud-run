@@ -1,0 +1,15 @@
+{
+  "instance": "Cloud Run, 1 NVIDIA L4 (sin redundancia zonal), 8 vCPU, 32 GiB, instance-based billing",
+  "usd_per_second": {
+    "gpu_l4": 0.0001867,
+    "cpu_8_vcpu": 0.000144,
+    "memory_32_gib": 6.4e-05
+  },
+  "usd_per_hour": 1.4209,
+  "checked": "2026-11-10",
+  "source": "https://cloud.google.com/run/pricing",
+  "note": "Precio de lista Tier 1, sin descuentos ni capa gratuita. Revisa la página antes de decidir; cambia por región y con el tiempo.",
+  "billing_assumption": "Con GPU, Cloud Run cobra la instancia completa mientras existe (instance-based billing): una instancia mínima inactiva cuesta lo mismo por hora que una ocupada. Por confirmar en la factura de la corrida en vivo.",
+  "idle_before_scale_down_s": 900,
+  "idle_before_scale_down_note": "Cota superior: Cloud Run puede mantener una instancia sin tráfico hasta 15 minutos antes de apagarla, y ese tiempo se cobra. Por confirmar con la corrida en vivo."
+}

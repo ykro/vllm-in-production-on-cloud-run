@@ -1,0 +1,25 @@
+{
+  "model": "gemini-3.8-flash (Gemini Developer API, nivel de pago, texto, sin batch)",
+  "source": "https://aistudio.google.com/docs/pricing",
+  "source_redirected_from": "https://ai.google.dev/gemini-api/docs/pricing",
+  "checked": "2026-11-10",
+  "periods": [
+    {
+      "label": "hasta 2026-12-31",
+      "usd_per_million_input": 0.75,
+      "usd_per_million_output": 3.75
+    },
+    {
+      "label": "desde 2027-01-01",
+      "usd_per_million_input": 1.5,
+      "usd_per_million_output": 7.5
+    }
+  ],
+  "note": "Precio de lista por millón de tokens de texto; la salida incluye los tokens de thinking. La página anuncia el aumento de 2027. No incluye caché de contexto, batch ni capa gratuita. Revisa la página antes de decidir.",
+  "reference_cheaper_model": {
+    "model": "gemini-3.5-flash-lite",
+    "usd_per_million_input": 0.3,
+    "usd_per_million_output": 2.5,
+    "checked": "2026-11-10"
+  }
+}

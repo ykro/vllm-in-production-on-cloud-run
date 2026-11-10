@@ -1,0 +1,21 @@
+# Sample startup log of one cold start: vLLM 0.33.0, google/gemma-4-E4B-it, Cloud Run with 1 L4,
+# weights downloaded anonymously from Hugging Face at startup.
+# Written by hand from the phase durations measured on the real deployment (about 8.5 min:
+# ~262 s downloading weights, ~55 s torch.compile, ~10 s CUDA graphs, plus engine init).
+# Line timestamps and source line numbers are illustrative; replace this file with your own:
+#   make logs   (gcloud logging read ... --format 'value(timestamp,textPayload)')
+2026-11-10T15:08:30.000000Z	STARTUP HTTP probe succeeded after 51 attempts for container "vllm-openai-1" on path "/health".
+2026-11-10T15:08:21.902000Z	INFO:     Application startup complete.
+2026-11-10T15:08:21.517000Z	INFO 11-10 15:08:21 [api_server.py:1971] Starting vLLM API server 0 on http://0.0.0.0:8080
+2026-11-10T15:08:00.931000Z	INFO 11-10 15:08:00 [core.py:210] init engine (profile, create kv cache, warmup model) took 76.6 seconds
+2026-11-10T15:08:00.215000Z	INFO 11-10 15:08:00 [gpu_model_runner.py:3480] Graph capturing finished in 10 secs, took 0.48 GiB
+2026-11-10T15:07:50.207000Z	INFO 11-10 15:07:50 [kv_cache_utils.py:1087] GPU KV cache size: 36,512 tokens
+2026-11-10T15:07:50.012000Z	INFO 11-10 15:07:50 [gpu_worker.py:298] Available KV cache memory: 4.9 GiB
+2026-11-10T15:07:39.334000Z	INFO 11-10 15:07:39 [monitor.py:34] torch.compile takes 55.0 s in total
+2026-11-10T15:06:44.330000Z	INFO 11-10 15:06:44 [gpu_model_runner.py:2653] Model loading took 15.4 GiB and 274.3 seconds
+2026-11-10T15:06:44.122000Z	INFO 11-10 15:06:44 [default_loader.py:267] Loading weights took 12.1 seconds
+2026-11-10T15:06:32.040000Z	INFO 11-10 15:06:32 [weight_utils.py:392] Time spent downloading weights for google/gemma-4-E4B-it: 262.0 seconds
+2026-11-10T15:02:10.031000Z	INFO 11-10 15:02:10 [gpu_model_runner.py:2602] Starting to load model google/gemma-4-E4B-it...
+2026-11-10T15:02:01.208000Z	INFO 11-10 15:02:01 [utils.py:328] non-default args: {'model': 'google/gemma-4-E4B-it', 'served_model_name': ['gemma'], 'max_model_len': 8192, 'host': '0.0.0.0', 'port': 8080}
+2026-11-10T15:02:00.412000Z	INFO 11-10 15:02:00 [api_server.py:1912] vLLM API server version 0.33.0
+2026-11-10T15:00:00.000000Z	Starting new instance. Reason: DEPLOYMENT_ROLLOUT - Instance started because of a new revision rollout.
