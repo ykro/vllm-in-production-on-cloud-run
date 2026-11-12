@@ -5,3 +5,4 @@ __pycache__/
 *.egg-info/
 data/startup_log*.txt
 !data/startup_log_sample.txt
+!data/startup_log_v033_excerpt.txt

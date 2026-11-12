@@ -100,3 +100,12 @@ def test_05_breakeven(base_url):
     later = r["by_api_period"]["desde 2027-01-01"]["breakeven_tokens_per_day"]
     assert later < be  # a pricier API breaks even sooner
     assert r["current"]["idle"]["min_instances_1_usd_per_month"] == pytest.approx(1037.26)
+
+
+def test_01_reads_a_real_vllm_033_log_and_matches_what_vllm_reports():
+    r = load("01_cold_start_anatomy").run(ROOT / "data" / "startup_log_v033_excerpt.txt")
+    by_phase = {p["phase"]: p["seconds"] for p in r["phases"]}
+    assert abs(by_phase["load_weights_to_gpu"] - r["reported_by_vllm"]["model_loading_s"]) < 2
+    assert abs(by_phase["torch_compile"] - r["reported_by_vllm"]["compile_s"]) < 1
+    assert not r["missing_events"] and r["phases_sum_s"] == pytest.approx(r["total_s"], abs=1e-3)
+    assert r["slowest_phase"] == "load_weights_to_gpu"

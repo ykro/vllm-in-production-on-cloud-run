@@ -56,10 +56,11 @@ Solo usa la biblioteca estándar de Python y el SDK de `openai`.
 ```bash
 export GCP_PROJECT_ID=tu-proyecto
 make stage                         # una vez: pesos al bucket en us-east4
-MAX_INSTANCES=2 make deploy        # 1 L4 por instancia, hasta 2 instancias
+MIN_INSTANCES=1 MAX_INSTANCES=2 make deploy   # 1 L4 por instancia, hasta 2; MIN_INSTANCES=1 solo mientras mides
 gcloud run services proxy vllm-gemma --region us-east4 --port 8000   # en otra terminal
-make logs                          # guarda el arranque en data/startup_log.txt
+make logs REVISION=<revisión>      # guarda el arranque de esa revisión en data/startup_log.txt
 make verify-live
+make cool                          # min-instances 0 y max-instances 1 otra vez
 make teardown
 ```
 
@@ -69,17 +70,32 @@ El túnel firma cada request con tu identidad de `gcloud`, así que el servicio 
 
 ## Resultados
 
-**Pendiente de la corrida en vivo.** Esta sección se llena con `benchmarks/terminal_output.txt` y `benchmarks/latest_results.json` cuando `make verify-live` corra contra Cloud Run. Lo único medido hasta ahora es la historia del cold start de arriba; `data/startup_log_sample.txt` es un log de ejemplo escrito a partir de esas duraciones para que el experimento 01 tenga algo que leer sin desplegar nada.
+Corrida en vivo del 2026-11-11 con `MIN_INSTANCES=1 MAX_INSTANCES=2 make deploy`, `make logs REVISION=<revisión>` y `make verify-live` (vLLM 0.33.0, `google/gemma-4-E4B-it` en bf16, Cloud Run `us-east4`, una NVIDIA L4 por instancia, pesos montados desde un bucket, concurrencia 16). Todo queda en `benchmarks/latest_results.json`, `benchmarks/terminal_output.txt`. El log completo del arranque (`data/startup_log.txt`) no se versiona porque trae el nombre de tu proyecto; `data/startup_log_v033_excerpt.txt` es el extracto con las líneas que lee el experimento 01. El juez pasa los 5 checks.
 
-Salida del juez en modo mock, solo para ver la forma del reporte (las cifras de 02 a 05 son del servicio falso):
+| Experimento | Resultado en L4 |
+| :--- | :--- |
+| **01. Anatomía del cold start** | **580 s (9.67 min)** de `Starting new instance` a la probe exitosa: contenedor y montaje 65.5 s, arranque del proceso 86.3, pesos a la GPU **262.9** (vLLM reporta 263.3), preparar el modelo 57.5, `torch.compile` 53.7 (vLLM reporta 53.73), CUDA graphs 22.4, KV-cache 0.8, resto del motor 17.4, API 5.9, probe 8.0 |
+| **02. Salud y listo** | `/health` 200 en 266 ms, `/v1/models` y `/version` responden; una completion de 1 token en 2,275 ms. Presupuesto de la startup probe 1,500 s |
+| **03. `/metrics`** | 450 series; las 4 que importan encontradas por fragmentos (`vllm:num_requests_running`, `vllm:num_requests_waiting`, `vllm:kv_cache_usage_perc`, `vllm:generation_tokens_total`). Ráfaga de 8 peticiones: 8 corriendo, 0 en cola, KV-cache al 1.1 %, 512 tokens; TTFT p50 0.15 s y p95 0.24 s; latencia total p50 3.75 s y p95 4.88 s |
+| **04. Segunda instancia bajo carga** | 48 usuarios durante 900 s: 3,889 peticiones, 0 errores. Cloud Run arrancó la segunda instancia a los 66 s de empezar la carga; empezó a atender cerca del segundo **600** (el script la vio en las métricas a los 687 s). Antes, latencia p50 de unos 14 s y p95 de 15.7 s; después, p50 de unos 7 s y p95 de 10.2 s (1.53 veces menos), y las peticiones por ventana de 30 s pasaron de unas 104 a unas 200 |
+| **05. Costo contra API** | 1 usuario 25.3 tokens/s, **USD 15.58** por millón de tokens de salida; 8 usuarios 197.0 tokens/s, **USD 2.00**. API `gemini-3.8-flash` con 2 tokens de entrada por cada token de salida: USD 5.25 hasta fin de 2026 y USD 10.50 desde 2027. Punto de equilibrio **6,495,543 tokens por día** (38 % de lo que produce una L4 llena); `min-instances 1` cuesta USD 1,037 al mes |
+
+Salida del juez en vivo:
 
 ```text
-01. Cold start anatomy           | 8.5 min: weights 274 s, compile 55 s         | graphs 10 s                  | PASS
-02. Health and readiness         | /health 200, 1 token in 14 ms                | probe budget 1500 s          | PASS
-03. /metrics that matter         | TTFT p95 0.0243 s, e2e p95 1.475 s           | 512 tokens                   | PASS
-04. Second instance under load   | 2 instances, 2nd at 1.608 s                  | p95 1.0235->0.6237 s         | PASS
-05. Cost vs hosted API           | $6.51 (1u) $0.94 (8u) /1M                    | break-even 6,495,543 tok/day | PASS
+01. Cold start anatomy           | 9.67 min: weights 263 s, compile 54 s        | graphs 22 s                  | PASS
+02. Health and readiness         | /health 200, 1 token in 2275 ms              | probe budget 1500 s          | PASS
+03. /metrics that matter         | TTFT p95 0.24 s, e2e p95 4.875 s             | 512 tokens                   | PASS
+04. Second instance under load   | 2 instances, 2nd at 687.23 s                 | p95 15.6527->10.2099 s       | PASS
+05. Cost vs hosted API           | $15.58 (1u) $2.00 (8u) /1M                   | break-even 6,495,543 tok/day | PASS
 ```
+
+### Lo que se midió y cambió el código
+
+- **El log real no tenía el formato de la muestra.** vLLM 0.33.0 escribe `Model loading took ... and 263.25 seconds`, `torch.compile took` (la muestra decía `takes`), `Loading model from scratch...`, y registra los CUDA graphs antes del tamaño del KV-cache. El experimento 01 ahora arma las fases ordenando los eventos por hora, y sus cifras coinciden con las que imprime vLLM. Con los pesos en el bucket no existe la línea de descarga: el montaje con GCS FUSE lee el archivo mientras el motor lo carga (los 263 s).
+- **El escalado con GPU responde en minutos.** La segunda instancia pagó su propio cold start (unos 9 minutos desde que Cloud Run la pidió). Mientras tanto los 48 usuarios esperaron unos 14 s por respuesta.
+- **`make cool` es otro despliegue.** Cambiar `min-instances` crea una revisión nueva y Cloud Run arranca una instancia para comprobarla; la GPU sigue encendida unos 10 minutos más antes de que todo vuelva a cero. En la corrida de la unidad anterior, la revisión nueva tardó de las 17:16 a las 17:25 UTC en estar lista.
+- **Cuota de GPU.** La segunda L4 sí estuvo disponible en `us-east4` durante la corrida (la cuota regional es de 3 y se comparte con otros servicios de la cuenta).
 
 ### Precios usados
 
@@ -97,7 +113,7 @@ Los dos archivos están en `benchmarks/pricing.json` y `benchmarks/api_prices.js
 - **La API cobra también la entrada.** El experimento 05 suma 2 tokens de entrada por cada token de salida (configurable con `--input-per-output`). En tu GPU el prefill ya está dentro del precio por hora.
 - **Break-even.** Es el número de tokens de salida por día a partir del cual `min-instances 1` (la L4 las 24 horas) cuesta menos que la API. El experimento también dice qué fracción de la capacidad de una instancia representa; si pasa del 100 %, una sola L4 no alcanza.
 - **`min-instances 0`.** No cobra en reposo, pero cada vez que despierta paga el cold start más el tiempo que Cloud Run mantiene la instancia sin tráfico antes de apagarla (hasta 15 minutos). El experimento lo reporta como costo por despertar.
-- **Supuestos por confirmar.** Que una instancia mínima inactiva con GPU se cobre a la tarifa completa y el tiempo exacto antes de apagarse están marcados así en `benchmarks/pricing.json` hasta verlos en la factura de la corrida en vivo. Los nombres de las métricas de `/metrics` en vLLM 0.33.0 también se confirman en esa corrida.
+- **Supuestos por confirmar.** Que una instancia mínima inactiva con GPU se cobre a la tarifa completa y el tiempo exacto antes de apagarse (los 15 minutos que usa el costo por despertar) siguen marcados así en `benchmarks/pricing.json`: no se vieron en una factura. Los nombres de las métricas de `/metrics` sí se confirmaron en vLLM 0.33.0. La cifra de headroom de la startup probe (2.94 veces) se calculó con el cold start de 510 s de Hugging Face; con los 580 s medidos ahora son 2.59 veces, y la constante del experimento ya usa 580.
 
 ---
 
@@ -109,7 +125,10 @@ Los dos archivos están en `benchmarks/pricing.json` y `benchmarks/api_prices.js
 │   ├── pricing.json                     # Precio de lista de la instancia de Cloud Run con L4
 │   └── api_prices.json                  # Precio de lista de la API Gemini Flash, con fecha y fuente
 ├── data/
-│   └── startup_log_sample.txt           # Log de arranque de ejemplo, escrito desde la corrida real
+│   ├── startup_log.txt                  # (no versionado) log completo de make logs
+│   ├── startup_log_v033_excerpt.txt     # Extracto del log real de vLLM 0.33.0 (lo usa un test)
+│   └── startup_log_sample.txt           # Log de ejemplo con el formato anterior; lo lee --mock
+├── diagrams/                            # 3 diagramas blue-gold (html, svg, png)
 ├── experiments/
 │   ├── 01_cold_start_anatomy.py         # Fases del cold start desde el log; Hugging Face vs bucket
 │   ├── 02_health_and_readiness.py       # /health, /v1/models, /version, readiness y startup probe

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anatomía de un cold start</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Geist', system-ui, sans-serif; background: #F7F6F2; color: #0F2547;
+           min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2.5rem 2rem; }
+    .frame { max-width: 1120px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow { font-family: 'Geist Mono', monospace; font-size: 0.66rem; font-weight: 500; letter-spacing: 0.18em;
+               text-transform: uppercase; color: #3B5B8C; margin-bottom: 0.5rem; }
+    h1 { font-family: 'Instrument Serif', serif; font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem); font-weight: 400;
+         letter-spacing: -0.02em; line-height: 1.15; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 1040px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Timeline · vLLM Field Guide</p>
+    <h1>Casi la mitad de los 9.7 minutos de un cold start se va en leer los pesos hacia la GPU</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 1040 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="t-title t-desc">
+        <title id="t-title">Anatomía de un cold start</title>
+        <desc id="t-desc">Un cold start de vLLM 0.33.0 con Gemma 4 E4B y los pesos en un bucket de Cloud Storage dura 580 segundos. Los pesos a la GPU toman 263 segundos, torch.compile 54, preparar el modelo 57, el arranque del proceso 86 y el contenedor 66. Los CUDA graphs toman 22 segundos.</desc>
+        <rect width="1040" height="540" fill="#F7F6F2"/>
+        <text x="40" y="56" fill="#0F2547" font-size="13" font-weight="600" font-family="'Geist', sans-serif">Un arranque en frío, de «Starting new instance» a la probe exitosa</text>
+        <text x="40" y="72" fill="#3B5B8C" font-size="9" font-weight="400" font-family="'Geist Mono', monospace">las fases se miden entre eventos del log, así que suman el total</text>
+        <rect x="40" y="96" width="108.325065348384" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="148.325065348384" y="96" width="142.75333375836348" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="291.0783991067475" y="96" width="434.856836638517" height="44" rx="3" fill="rgba(197,146,22,0.18)" stroke="#C59216" stroke-width="1"/>
+        <rect x="725.9352357452644" y="96" width="95.09500285172248" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="821.0302385969869" y="96" width="88.88524358534748" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="909.9154821823344" y="96" width="37.091484291402956" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="947.0069664737373" y="96" width="1.5" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="948.275715902962" y="96" width="28.699873007886605" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="976.9755889108486" y="96" width="9.719910881518254" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <rect x="986.6954997923668" y="96" width="13.304500207632964" height="44" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="176" fill="#3B5B8C" font-size="8" font-weight="400" font-family="'Geist Mono', monospace" letter-spacing="0.14em">FASE</text>
+        <text x="420" y="176" fill="#3B5B8C" font-size="8" font-weight="400" font-family="'Geist Mono', monospace" text-anchor="end" letter-spacing="0.14em">SEGUNDOS</text>
+        <text x="560" y="176" fill="#3B5B8C" font-size="8" font-weight="400" font-family="'Geist Mono', monospace" letter-spacing="0.14em">PROPORCIÓN</text>
+        <text x="40" y="207" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">contenedor y montaje</text>
+        <text x="420" y="207" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">65.5</text>
+        <rect x="560" y="196" width="94.61855513307985" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="229" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">arranque del proceso</text>
+        <text x="420" y="229" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">86.3</text>
+        <rect x="560" y="218" width="124.69057034220533" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="251" fill="#9A6F0B" font-size="11" font-weight="600" font-family="'Geist', sans-serif">pesos a la GPU</text>
+        <text x="420" y="251" fill="#9A6F0B" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">262.9</text>
+        <rect x="560" y="240" width="379.8338403041825" height="14" rx="3" fill="rgba(197,146,22,0.18)" stroke="#C59216" stroke-width="1"/>
+        <text x="40" y="273" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">preparar el modelo</text>
+        <text x="420" y="273" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">57.5</text>
+        <rect x="560" y="262" width="83.06250950570342" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="295" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">torch.compile</text>
+        <text x="420" y="295" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">53.7</text>
+        <rect x="560" y="284" width="77.63847908745248" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="317" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">CUDA graphs</text>
+        <text x="420" y="317" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">22.4</text>
+        <rect x="560" y="306" width="32.39825095057034" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="339" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">KV-cache</text>
+        <text x="420" y="339" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">0.8</text>
+        <rect x="560" y="328" width="1.5" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="361" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">motor, resto</text>
+        <text x="420" y="361" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">17.4</text>
+        <rect x="560" y="350" width="25.068441064638787" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="383" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">API</text>
+        <text x="420" y="383" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">5.9</text>
+        <rect x="560" y="372" width="8.490038022813689" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="405" fill="#0F2547" font-size="11" font-weight="500" font-family="'Geist', sans-serif">probe</text>
+        <text x="420" y="405" fill="#0F2547" font-size="11" font-weight="600" font-family="'Geist Mono', monospace" text-anchor="end">8.0</text>
+        <rect x="560" y="394" width="11.621064638783269" height="14" rx="3" fill="rgba(15,37,71,0.10)" stroke="#3B5B8C" stroke-width="1"/>
+        <text x="40" y="464" fill="#3B5B8C" font-size="14" font-weight="400" font-family="'Instrument Serif', serif" font-style="italic">Los pesos a la GPU son 263 s de 580. Desde Hugging Face, sin token, la descarga tardó 262 s en otra región y en us-east4 no terminó en 15 minutos.</text>
+        <line x1="40" y1="484" x2="1000" y2="484" stroke="rgba(15,37,71,0.10)" stroke-width="0.8"/>
+        <text x="40" y="502" fill="#3B5B8C" font-size="8" font-weight="400" font-family="'Geist Mono', monospace" letter-spacing="0.14em">LEYENDA</text>
+        <text x="120" y="502" fill="#0F2547" font-size="9" font-weight="400" font-family="'Geist', sans-serif">Gemma 4 E4B bf16, vLLM 0.33.0, una L4 de Cloud Run, pesos montados desde Cloud Storage; log de la corrida en vivo del 2026-11-11</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

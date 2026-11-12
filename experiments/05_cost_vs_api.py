@@ -33,7 +33,7 @@ HOURS_PER_MONTH = 730
 # Input tokens per output token in a typical app request (prompt + context vs answer).
 # The API bills input too; on your GPU prefill is cheap and already inside the hourly price.
 INPUT_PER_OUTPUT = 2.0
-COLD_START_S = 510  # measured with weights from Hugging Face (experiment 01)
+COLD_START_S = 580  # measured with weights mounted from a bucket (experiment 01)
 
 
 def throughput(base_url: str, users: int, out_tokens: int) -> float:

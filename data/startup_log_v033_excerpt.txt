@@ -1,0 +1,16 @@
+# Excerpt of the startup log of one real cold start (vLLM 0.33.0, google/gemma-4-E4B-it, Cloud Run with 1 L4,
+# weights mounted from a bucket), 2026-11-11. Only the lines experiment 01 reads, with paths shortened.
+# Export your own with: make logs REVISION=<revision>
+2026-11-11T17:37:39.542402Z	STARTUP HTTP probe succeeded after 59 attempts for container "vllm-openai-1" on port 8080 path "/health".
+2026-11-11T17:37:31.499681Z	INFO:     Application startup complete.
+2026-11-11T17:37:25.623886Z	(EngineCore pid=58) INFO 11-11 17:37:25 [core.py:405] init engine (profile, create kv cache, warmup model) took 151.68 s (compilation: 53.73 s)
+2026-11-11T17:37:19.481075Z	(EngineCore pid=58) INFO 11-11 17:37:19 [model_runner.py:1163] Graph capturing finished in 9 secs, took 0.29 GiB
+2026-11-11T17:37:08.274341Z	(EngineCore pid=58) INFO 11-11 17:37:08 [kv_cache_utils.py:1147] GPU KV cache size: 93,138 tokens, Maximum concurrency for 8,192 tokens per request: 11.37x
+2026-11-11T17:37:07.507772Z	(EngineCore pid=58) INFO 11-11 17:37:07 [model_runner.py:1163] Graph capturing finished in 17 secs, took 0.52 GiB
+2026-11-11T17:36:45.084552Z	(EngineCore pid=58) INFO 11-11 17:36:45 [monitor.py:62] [backbone] torch.compile took 53.73 s in total
+2026-11-11T17:35:51.350554Z	(EngineCore pid=58) INFO 11-11 17:35:51 [monitor.py:40] [backbone] Starting torch.compile
+2026-11-11T17:34:53.862450Z	(EngineCore pid=58) INFO 11-11 17:34:53 [model_runner.py:428] Model loading took 15.07 GiB memory and 263.254135 seconds
+2026-11-11T17:34:51.294568Z	(EngineCore pid=58) INFO 11-11 17:34:51 [default_loader.py:506] Loading weights took 253.69 seconds
+2026-11-11T17:30:30.977794Z	(EngineCore pid=58) INFO 11-11 17:30:30 [model_runner.py:399] Loading model from scratch...
+2026-11-11T17:29:04.678323Z	(APIServer pid=1) INFO 11-11 17:29:04 [startup.py:96] non-default args: {'model': '/models/google/gemma-4-E4B-it', 'served_model_name': ['gemma'], 'max_model_len': 8192}
+2026-11-11T17:27:59.191901Z	Starting new instance. Reason: MANUAL_OR_CUSTOMER_MIN_INSTANCE - Instance started because of customer-configured min-instances or manual scaling.

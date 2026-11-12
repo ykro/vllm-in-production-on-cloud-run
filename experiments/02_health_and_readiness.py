@@ -27,8 +27,8 @@ from vllm_lab import cli
 PERIOD_S = 10
 FAILURE_THRESHOLD = 150
 TIMEOUT_S = 5
-# Measured cold start with weights from Hugging Face (see experiment 01): about 8.5 min.
-MEASURED_COLD_START_S = 510
+# Measured cold start with weights mounted from a bucket (experiment 01): 580 s, 9.7 min.
+MEASURED_COLD_START_S = 580
 
 
 def timed_get(url: str, timeout: float = 60) -> dict:

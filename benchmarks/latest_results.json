@@ -1,0 +1,523 @@
+{
+  "generated_at": "2026-11-11T18:01:06+00:00",
+  "vllm_version": "0.33.0",
+  "experiments": {
+    "01_cold_start_anatomy": {
+      "log": "data/startup_log.txt",
+      "is_sample": false,
+      "phases": [
+        {
+          "phase": "container_start",
+          "ends_at_s": 65.5,
+          "seconds": 65.486
+        },
+        {
+          "phase": "process_init",
+          "ends_at_s": 151.8,
+          "seconds": 86.299
+        },
+        {
+          "phase": "load_weights_to_gpu",
+          "ends_at_s": 414.7,
+          "seconds": 262.885
+        },
+        {
+          "phase": "model_setup",
+          "ends_at_s": 472.2,
+          "seconds": 57.488
+        },
+        {
+          "phase": "torch_compile",
+          "ends_at_s": 525.9,
+          "seconds": 53.734
+        },
+        {
+          "phase": "cuda_graphs",
+          "ends_at_s": 548.3,
+          "seconds": 22.423
+        },
+        {
+          "phase": "kv_cache_profile",
+          "ends_at_s": 549.1,
+          "seconds": 0.767
+        },
+        {
+          "phase": "engine_init_rest",
+          "ends_at_s": 566.4,
+          "seconds": 17.35
+        },
+        {
+          "phase": "api_server",
+          "ends_at_s": 572.3,
+          "seconds": 5.876
+        },
+        {
+          "phase": "startup_probe",
+          "ends_at_s": 580.4,
+          "seconds": 8.043
+        }
+      ],
+      "summary": {
+        "weights_s": 262.9,
+        "compile_s": 53.7,
+        "cuda_graphs_s": 22.4,
+        "rest_s": 241.4,
+        "total_s": 580.4,
+        "total_min": 9.67
+      },
+      "reported_by_vllm": {
+        "load_s": 253.69,
+        "model_loading_s": 263.254135,
+        "compile_s": 53.73,
+        "cuda_graphs_s": 17.0
+      },
+      "missing_events": [
+        "weights_downloaded"
+      ],
+      "slowest_phase": "load_weights_to_gpu",
+      "phases_sum_s": 580.351,
+      "total_s": 580.351
+    },
+    "02_health_and_readiness": {
+      "health": {
+        "status": 200,
+        "ms": 265.7
+      },
+      "models": {
+        "status": 200,
+        "ms": 267.1,
+        "id": "gemma",
+        "weights": "/models/google/gemma-4-E4B-it",
+        "max_model_len": 8192
+      },
+      "version": {
+        "status": 200,
+        "ms": 252.9,
+        "vllm": "0.33.0"
+      },
+      "readiness": {
+        "ready": true,
+        "ms": 2274.9,
+        "completion_tokens": 1
+      },
+      "startup_probe": {
+        "flag": "--startup-probe httpGet.path=/health,httpGet.port=8080,periodSeconds=10,failureThreshold=150,timeoutSeconds=5",
+        "budget_s": 1500,
+        "measured_cold_start_s": 510,
+        "headroom_x": 2.94,
+        "fits": true,
+        "probes_until_ready": 51,
+        "rule": "budget >= 2x the slowest cold start you have measured"
+      }
+    },
+    "03_metrics_dashboard": {
+      "series_total": 450,
+      "matched_names": {
+        "requests_running": "vllm:num_requests_running",
+        "requests_waiting": "vllm:num_requests_waiting",
+        "kv_cache_usage": "vllm:kv_cache_usage_perc",
+        "generation_tokens": "vllm:generation_tokens_total"
+      },
+      "peak_during_burst": {
+        "requests_running": 8.0,
+        "requests_waiting": 0.0,
+        "kv_cache_usage": 0.011448481831757062
+      },
+      "after_burst": {
+        "requests_running": 0.0,
+        "requests_waiting": 0.0,
+        "kv_cache_usage": 0.0
+      },
+      "latency": {
+        "ttft": {
+          "name": "vllm:time_to_first_token_seconds_bucket",
+          "requests": 8.0,
+          "p50_s": 0.15,
+          "p95_s": 0.24
+        },
+        "e2e": {
+          "name": "vllm:e2e_request_latency_seconds_bucket",
+          "requests": 8.0,
+          "p50_s": 3.75,
+          "p95_s": 4.875
+        }
+      },
+      "generation_tokens_in_burst": 512.0,
+      "expected_generation_tokens": 512,
+      "parsed_all": true
+    },
+    "04_autoscaling_two_instances": {
+      "users": 48,
+      "duration_s": 900.0,
+      "max_tokens": 128,
+      "requests": 3889,
+      "errors": 0,
+      "instances_seen": 2,
+      "instance_source": "metrics process_start_time_seconds",
+      "instance_first_seen_s": {
+        "process@1794418027": 0.43,
+        "process@1794418828": 687.23
+      },
+      "second_instance_at_s": 687.23,
+      "p95_before_s": 15.6527,
+      "p95_after_s": 10.2099,
+      "p95_reduction_x": 1.53,
+      "timeline": [
+        {
+          "t_s": 0.0,
+          "requests": 131,
+          "p50_s": 14.599,
+          "p95_s": 20.318,
+          "by_instance": {
+            "?": 131
+          }
+        },
+        {
+          "t_s": 30.0,
+          "requests": 101,
+          "p50_s": 11.11,
+          "p95_s": 15.013,
+          "by_instance": {
+            "?": 101
+          }
+        },
+        {
+          "t_s": 60.0,
+          "requests": 103,
+          "p50_s": 14.093,
+          "p95_s": 15.241,
+          "by_instance": {
+            "?": 103
+          }
+        },
+        {
+          "t_s": 90.0,
+          "requests": 101,
+          "p50_s": 14.684,
+          "p95_s": 15.492,
+          "by_instance": {
+            "?": 101
+          }
+        },
+        {
+          "t_s": 120.0,
+          "requests": 101,
+          "p50_s": 14.307,
+          "p95_s": 15.316,
+          "by_instance": {
+            "?": 101
+          }
+        },
+        {
+          "t_s": 150.0,
+          "requests": 98,
+          "p50_s": 14.409,
+          "p95_s": 15.34,
+          "by_instance": {
+            "?": 98
+          }
+        },
+        {
+          "t_s": 180.0,
+          "requests": 95,
+          "p50_s": 14.633,
+          "p95_s": 17.776,
+          "by_instance": {
+            "?": 95
+          }
+        },
+        {
+          "t_s": 210.0,
+          "requests": 106,
+          "p50_s": 14.096,
+          "p95_s": 25.706,
+          "by_instance": {
+            "?": 106
+          }
+        },
+        {
+          "t_s": 240.0,
+          "requests": 27,
+          "p50_s": 21.463,
+          "p95_s": 32.074,
+          "by_instance": {
+            "?": 27
+          }
+        },
+        {
+          "t_s": 270.0,
+          "requests": 53,
+          "p50_s": 10.611,
+          "p95_s": 16.541,
+          "by_instance": {
+            "?": 53
+          }
+        },
+        {
+          "t_s": 300.0,
+          "requests": 103,
+          "p50_s": 13.697,
+          "p95_s": 15.551,
+          "by_instance": {
+            "?": 103
+          }
+        },
+        {
+          "t_s": 330.0,
+          "requests": 111,
+          "p50_s": 13.176,
+          "p95_s": 14.727,
+          "by_instance": {
+            "?": 111
+          }
+        },
+        {
+          "t_s": 360.0,
+          "requests": 106,
+          "p50_s": 13.232,
+          "p95_s": 15.013,
+          "by_instance": {
+            "?": 106
+          }
+        },
+        {
+          "t_s": 390.0,
+          "requests": 109,
+          "p50_s": 13.119,
+          "p95_s": 14.414,
+          "by_instance": {
+            "?": 109
+          }
+        },
+        {
+          "t_s": 420.0,
+          "requests": 106,
+          "p50_s": 13.791,
+          "p95_s": 14.951,
+          "by_instance": {
+            "?": 106
+          }
+        },
+        {
+          "t_s": 450.0,
+          "requests": 104,
+          "p50_s": 13.734,
+          "p95_s": 14.715,
+          "by_instance": {
+            "?": 104
+          }
+        },
+        {
+          "t_s": 480.0,
+          "requests": 103,
+          "p50_s": 13.93,
+          "p95_s": 14.931,
+          "by_instance": {
+            "?": 103
+          }
+        },
+        {
+          "t_s": 510.0,
+          "requests": 106,
+          "p50_s": 13.877,
+          "p95_s": 15.006,
+          "by_instance": {
+            "?": 106
+          }
+        },
+        {
+          "t_s": 540.0,
+          "requests": 103,
+          "p50_s": 14.297,
+          "p95_s": 15.352,
+          "by_instance": {
+            "?": 103
+          }
+        },
+        {
+          "t_s": 570.0,
+          "requests": 103,
+          "p50_s": 13.974,
+          "p95_s": 15.071,
+          "by_instance": {
+            "?": 103
+          }
+        },
+        {
+          "t_s": 600.0,
+          "requests": 119,
+          "p50_s": 12.519,
+          "p95_s": 14.59,
+          "by_instance": {
+            "?": 119
+          }
+        },
+        {
+          "t_s": 630.0,
+          "requests": 200,
+          "p50_s": 6.761,
+          "p95_s": 10.135,
+          "by_instance": {
+            "?": 200
+          }
+        },
+        {
+          "t_s": 660.0,
+          "requests": 208,
+          "p50_s": 7.1,
+          "p95_s": 10.128,
+          "by_instance": {
+            "?": 208
+          }
+        },
+        {
+          "t_s": 690.0,
+          "requests": 210,
+          "p50_s": 6.799,
+          "p95_s": 8.896,
+          "by_instance": {
+            "?": 210
+          }
+        },
+        {
+          "t_s": 720.0,
+          "requests": 202,
+          "p50_s": 6.937,
+          "p95_s": 9.723,
+          "by_instance": {
+            "?": 202
+          }
+        },
+        {
+          "t_s": 750.0,
+          "requests": 199,
+          "p50_s": 7.549,
+          "p95_s": 10.166,
+          "by_instance": {
+            "?": 199
+          }
+        },
+        {
+          "t_s": 780.0,
+          "requests": 191,
+          "p50_s": 7.787,
+          "p95_s": 10.673,
+          "by_instance": {
+            "?": 191
+          }
+        },
+        {
+          "t_s": 810.0,
+          "requests": 188,
+          "p50_s": 7.505,
+          "p95_s": 11.251,
+          "by_instance": {
+            "?": 188
+          }
+        },
+        {
+          "t_s": 840.0,
+          "requests": 198,
+          "p50_s": 7.076,
+          "p95_s": 9.873,
+          "by_instance": {
+            "?": 198
+          }
+        },
+        {
+          "t_s": 870.0,
+          "requests": 204,
+          "p50_s": 7.091,
+          "p95_s": 9.191,
+          "by_instance": {
+            "?": 204
+          }
+        }
+      ]
+    },
+    "05_cost_vs_api": {
+      "instance": "Cloud Run, 1 NVIDIA L4 (sin redundancia zonal), 8 vCPU, 32 GiB, instance-based billing",
+      "usd_per_hour": 1.4209,
+      "price_checked": "2026-11-10",
+      "api_model": "gemini-3.8-flash (Gemini Developer API, nivel de pago, texto, sin batch)",
+      "api_checked": "2026-11-10",
+      "api_source": "https://aistudio.google.com/docs/pricing",
+      "input_per_output": 2.0,
+      "users_compared": [
+        1,
+        8
+      ],
+      "rows": [
+        {
+          "users": 1,
+          "output_tokens_per_s": 25.3,
+          "usd_per_million_output_tokens": 15.576,
+          "tokens_per_day_at_full_load": 2189333
+        },
+        {
+          "users": 8,
+          "output_tokens_per_s": 197.0,
+          "usd_per_million_output_tokens": 2.004,
+          "tokens_per_day_at_full_load": 17019089
+        }
+      ],
+      "current": {
+        "api_usd_per_million_output_blended": 5.25,
+        "idle": {
+          "min_instances_0_usd_per_month_idle": 0.0,
+          "min_instances_1_usd_per_month": 1037.26,
+          "min_instances_0_usd_per_wake": 0.584,
+          "wake_assumes_s": {
+            "cold_start": 580.351,
+            "idle_before_scale_down": 900
+          }
+        },
+        "breakeven_tokens_per_day": 6495543,
+        "breakeven_vs_capacity": 0.382,
+        "breakeven_reachable": true,
+        "gpu_cheaper_per_token_at_full_load": true
+      },
+      "by_api_period": {
+        "hasta 2026-12-31": {
+          "api_usd_per_million_output_blended": 5.25,
+          "idle": {
+            "min_instances_0_usd_per_month_idle": 0.0,
+            "min_instances_1_usd_per_month": 1037.26,
+            "min_instances_0_usd_per_wake": 0.584,
+            "wake_assumes_s": {
+              "cold_start": 580.351,
+              "idle_before_scale_down": 900
+            }
+          },
+          "breakeven_tokens_per_day": 6495543,
+          "breakeven_vs_capacity": 0.382,
+          "breakeven_reachable": true,
+          "gpu_cheaper_per_token_at_full_load": true
+        },
+        "desde 2027-01-01": {
+          "api_usd_per_million_output_blended": 10.5,
+          "idle": {
+            "min_instances_0_usd_per_month_idle": 0.0,
+            "min_instances_1_usd_per_month": 1037.26,
+            "min_instances_0_usd_per_wake": 0.584,
+            "wake_assumes_s": {
+              "cold_start": 580.351,
+              "idle_before_scale_down": 900
+            }
+          },
+          "breakeven_tokens_per_day": 3247771,
+          "breakeven_vs_capacity": 0.191,
+          "breakeven_reachable": true,
+          "gpu_cheaper_per_token_at_full_load": true
+        }
+      }
+    }
+  },
+  "checks": {
+    "01. Cold start anatomy": true,
+    "02. Health and readiness": true,
+    "03. /metrics that matter": true,
+    "04. Second instance under load": true,
+    "05. Cost vs hosted API": true
+  }
+}

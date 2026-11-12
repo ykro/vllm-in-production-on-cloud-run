@@ -23,26 +23,31 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SAMPLE = ROOT / "data" / "startup_log_sample.txt"
 
-# (event, pattern in the log line, phase that ENDS at this event)
+# (event, pattern in the log line, phase that ENDS at this event). Phases are built from the
+# events sorted by time, so the order of this list does not matter (vLLM 0.33 logs the CUDA
+# graphs before the KV-cache size; older versions did the opposite).
 EVENTS = [
     ("instance_start", r"Starting new instance", None),
-    ("first_log", r"vLLM API server version", "container_start"),
-    ("load_start", r"Starting to load model", "process_init"),
+    ("first_log", r"non-default args|vLLM API server version", "container_start"),
+    ("load_start", r"Loading model from scratch|Starting to load model", "process_init"),
     ("weights_downloaded", r"Time spent downloading weights", "download_weights"),
     ("weights_loaded", r"Model loading took", "load_weights_to_gpu"),
-    ("compile_done", r"torch\.compile takes", "torch_compile"),
-    ("kv_cache_ready", r"GPU KV cache size|Available KV cache memory", "kv_cache_profile"),
+    ("compile_start", r"Starting torch\.compile", "model_setup"),
+    ("compile_done", r"torch\.compile (?:takes|took)", "torch_compile"),
     ("graphs_done", r"Graph capturing finished", "cuda_graphs"),
+    ("kv_cache_ready", r"GPU KV cache size", "kv_cache_profile"),
     ("engine_ready", r"init engine", "engine_init_rest"),
     ("server_up", r"Application startup complete|Starting vLLM API server", "api_server"),
     ("probe_ok", r"STARTUP .*probe succeeded", "startup_probe"),
 ]
+# vLLM does not always log these: there is no download line when the weights come from a mount.
+OPTIONAL = {"weights_downloaded", "compile_start"}
 # Durations vLLM itself prints, to cross-check the timestamp arithmetic.
 REPORTED = {
     "download_s": r"downloading weights.*?: ([\d.]+) seconds",
     "load_s": r"Loading weights took ([\d.]+) seconds",
     "model_loading_s": r"Model loading took .*? and ([\d.]+) seconds",
-    "compile_s": r"torch\.compile takes ([\d.]+) s",
+    "compile_s": r"torch\.compile (?:takes|took) ([\d.]+) s",
     "cuda_graphs_s": r"Graph capturing finished in ([\d.]+) secs",
     "engine_init_s": r"init engine .*? took ([\d.]+) seconds",
 }
@@ -84,12 +89,12 @@ def anatomy(text: str) -> dict:
                 found[event] = (ts, msg)
     t0 = found.get("instance_start", (lines[0][0], ""))[0]
     phases, prev_t = [], t0
-    for event, _, phase in EVENTS[1:]:
-        if event in found:
-            t = found[event][0]
-            phases.append({"phase": phase, "ends_at_s": round(t - t0, 1),
-                           "seconds": round(t - prev_t, 3)})
-            prev_t = t
+    ending = {event: phase for event, _, phase in EVENTS[1:]}
+    for event, (t, _) in sorted(((e, v) for e, v in found.items() if e in ending),
+                                key=lambda item: item[1][0]):
+        phases.append({"phase": ending[event], "ends_at_s": round(t - t0, 1),
+                       "seconds": round(t - prev_t, 3)})
+        prev_t = t
     total = prev_t - t0
     reported = {}
     for key, pattern in REPORTED.items():
@@ -103,7 +108,7 @@ def anatomy(text: str) -> dict:
     summary["total_min"] = round(total / 60, 2)
     slowest = max(phases, key=lambda p: p["seconds"])["phase"] if phases else None
     return {"phases": phases, "summary": summary, "reported_by_vllm": reported,
-            "missing_events": [e for e, _, _ in EVENTS if e not in found],
+            "missing_events": [e for e, _, _ in EVENTS if e not in found and e not in OPTIONAL],
             "slowest_phase": slowest,
             "phases_sum_s": round(sum(p["seconds"] for p in phases), 3),
             "total_s": round(total, 3)}

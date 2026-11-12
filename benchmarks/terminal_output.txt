@@ -1,0 +1,20 @@
+==================================================================================================================
+THE OUTSIDE JUDGE — vLLM in Production on Cloud Run
+==================================================================================================================
+Mode    : live
+Server  : vLLM 0.33.0 | model /models/google/gemma-4-E4B-it served as 'gemma'
+Startup : data/startup_log.txt
+Client  : Python 3.12.11 | Darwin arm64
+------------------------------------------------------------------------------------------------------------------
+Experiment                       | Measured                                     | Result                       | Check
+------------------------------------------------------------------------------------------------------------------
+01. Cold start anatomy           | 9.67 min: weights 263 s, compile 54 s        | graphs 22 s                  | PASS
+02. Health and readiness         | /health 200, 1 token in 2275 ms              | probe budget 1500 s          | PASS
+03. /metrics that matter         | TTFT p95 0.24 s, e2e p95 4.875 s             | 512 tokens                   | PASS
+04. Second instance under load   | 2 instances, 2nd at 687.23 s                 | p95 15.6527->10.2099 s       | PASS
+05. Cost vs hosted API           | $15.58 (1u) $2.00 (8u) /1M                   | break-even 6,495,543 tok/day | PASS
+------------------------------------------------------------------------------------------------------------------
+Instance: Cloud Run, 1 NVIDIA L4 (sin redundancia zonal), 8 vCPU, 32 GiB, instance-based billing, $1.4209/h list price checked 2026-11-10.
+API     : gemini-3.8-flash (Gemini Developer API, nivel de pago, texto, sin batch), $5.25 per 1M output with 2.0 input tokens each, checked 2026-11-10.
+Idle    : min-instances 1 $1037.26/month; min-instances 0 $0 idle, $0.584 per wake.
+ALL CHECKS PASSED.
