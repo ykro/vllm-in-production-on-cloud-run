@@ -100,6 +100,20 @@ def test_05_breakeven(base_url):
     later = r["by_api_period"]["desde 2027-01-01"]["breakeven_tokens_per_day"]
     assert later < be  # a pricier API breaks even sooner
     assert r["current"]["idle"]["min_instances_1_usd_per_month"] == pytest.approx(1037.26)
+    assert r["current"]["idle"]["wake_assumes_s"]["idle_before_scale_down"] == r["idle_before_scale_down"]["seconds"]
+
+
+def test_05_idle_time_comes_from_the_lifecycle_log():
+    mod = load("05_cost_vs_api")
+    idle = mod.idle_before_scale_down()
+    # vllm-gemma-00010-bmh: probe passed 18:11:01.346, shutting down 18:21:15.302 (10.2 min)
+    assert idle["seconds"] == pytest.approx(614.0, abs=0.1)
+    assert mod.wake_usd(1.4209, 580.351, idle["seconds"]) == pytest.approx(0.471, abs=0.001)
+
+
+def test_02_probe_budget_uses_the_cold_start_it_is_given():
+    probe = load("02_health_and_readiness").probe_budget(cold_start_s=580.351)
+    assert probe["measured_cold_start_s"] == 580.351 and probe["headroom_x"] == pytest.approx(2.58)
 
 
 def test_01_reads_a_real_vllm_033_log_and_matches_what_vllm_reports():

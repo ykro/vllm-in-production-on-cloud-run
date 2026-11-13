@@ -7,7 +7,8 @@ with the list price of a hosted Gemini Flash-class API (benchmarks/api_prices.js
 Then the part a per-token price hides:
 - min-instances 1 bills the GPU 24 hours a day, busy or idle;
 - min-instances 0 bills nothing while idle, but every wake-up pays a cold start plus the
-  idle time Cloud Run keeps the instance before scaling it down;
+  idle time Cloud Run keeps the instance before scaling it down (measured from
+  data/instance_lifecycle_log.txt: startup probe passed -> "Shutting down" on a revision with no traffic);
 - break-even: how many output tokens per day you need before the always-on GPU costs less
   than the API, and whether one instance can even produce that many.
 
@@ -20,20 +21,53 @@ import json
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))  # run from anywhere
 
 from vllm_lab import cli, make_client, stream_chat
 
-BENCH = Path(__file__).resolve().parent.parent / "benchmarks"
+ROOT = Path(__file__).resolve().parent.parent
+BENCH = ROOT / "benchmarks"
 PRICING = BENCH / "pricing.json"
 API_PRICES = BENCH / "api_prices.json"
 HOURS_PER_MONTH = 730
 # Input tokens per output token in a typical app request (prompt + context vs answer).
 # The API bills input too; on your GPU prefill is cheap and already inside the hourly price.
 INPUT_PER_OUTPUT = 2.0
-COLD_START_S = 580  # measured with weights mounted from a bucket (experiment 01)
+COLD_START_S = 580  # fallback; verify_production.py passes what experiment 01 measures
+# Cloud Logging export of instance starts, startup probes and shutdowns on 2026-11-11.
+LIFECYCLE_LOG = ROOT / "data" / "instance_lifecycle_log.txt"
+# The min-instances 0 revision deployed by `make cool`: it got no request, so the time between its
+# startup probe and its shutdown is how long Cloud Run kept an idle GPU instance alive.
+IDLE_REVISION = "vllm-gemma-00010-bmh"
+
+
+def idle_before_scale_down(log_path: Path = LIFECYCLE_LOG, revision: str = IDLE_REVISION) -> dict:
+    """Seconds an instance with no traffic stayed up: startup probe passed -> 'Shutting down'."""
+    probe = shutdown = None
+    for line in log_path.read_text(encoding="utf-8").splitlines():
+        if not line.strip() or line.startswith("#"):
+            continue
+        stamp, rev, text = line.split("\t", 2)
+        if rev != revision:
+            continue
+        if text.startswith("STARTUP HTTP probe succeeded"):
+            probe = datetime.fromisoformat(stamp)
+        elif "Shutting down" in text:
+            shutdown = datetime.fromisoformat(stamp) if shutdown is None else min(shutdown, datetime.fromisoformat(stamp))
+    if probe is None or shutdown is None or shutdown <= probe:
+        raise ValueError(f"{log_path.name}: no probe -> shutdown pair for {revision}")
+    return {"log": str(log_path.relative_to(ROOT)) if log_path.is_relative_to(ROOT) else str(log_path),
+            "revision": revision,
+            "probe_succeeded_at": probe.isoformat(), "shutting_down_at": shutdown.isoformat(),
+            "seconds": round((shutdown - probe).total_seconds(), 1)}
+
+
+def wake_usd(per_hour: float, cold_start_s: float, idle_tail_s: float) -> float:
+    """What one wake-up of a min-instances 0 service costs: cold start + idle time before scale-down."""
+    return round((cold_start_s + idle_tail_s) * per_hour / 3600, 3)
 
 
 def throughput(base_url: str, users: int, out_tokens: int) -> float:
@@ -61,14 +95,13 @@ def economics(per_hour: float, tps_by_users: dict[int, float], api_blended: floa
     always_on_day = per_hour * 24
     breakeven = always_on_day / api_blended * 1e6
     capacity = best["tokens_per_day_at_full_load"]
-    wake_cost = (cold_start_s + idle_tail_s) * per_hour / 3600
     return {
         "rows": rows,
         "api_usd_per_million_output_blended": round(api_blended, 3),
         "idle": {
             "min_instances_0_usd_per_month_idle": 0.0,
             "min_instances_1_usd_per_month": round(per_hour * HOURS_PER_MONTH, 2),
-            "min_instances_0_usd_per_wake": round(wake_cost, 3),
+            "min_instances_0_usd_per_wake": wake_usd(per_hour, cold_start_s, idle_tail_s),
             "wake_assumes_s": {"cold_start": cold_start_s, "idle_before_scale_down": idle_tail_s},
         },
         "breakeven_tokens_per_day": round(breakeven),
@@ -83,13 +116,13 @@ def run(base_url: str, users: int = 8, out_tokens: int = 256,
     price = json.loads(PRICING.read_text())
     api = json.loads(API_PRICES.read_text())
     per_hour = price["usd_per_hour"]
+    idle = idle_before_scale_down()
     stream_chat(make_client(base_url), "Hola", max_tokens=8)  # warmup
     tps = {u: throughput(base_url, u, out_tokens) for u in (1, users)}
     periods = {}
     for period in api["periods"]:
         blended = api_usd_per_million_output(period, input_per_output)
-        periods[period["label"]] = economics(per_hour, tps, blended, cold_start_s,
-                                             price["idle_before_scale_down_s"])
+        periods[period["label"]] = economics(per_hour, tps, blended, cold_start_s, idle["seconds"])
     current = periods[api["periods"][0]["label"]]
     rows = current["rows"]
     periods = {k: {kk: vv for kk, vv in v.items() if kk != "rows"} for k, v in periods.items()}
@@ -99,10 +132,24 @@ def run(base_url: str, users: int = 8, out_tokens: int = 256,
         "api_model": api["model"], "api_checked": api["checked"], "api_source": api["source"],
         "input_per_output": input_per_output,
         "users_compared": [1, users],
+        "idle_before_scale_down": idle,
         "rows": rows,
         "current": periods[api["periods"][0]["label"]],
         "by_api_period": periods,
     }
+
+
+def refresh_idle(result: dict, cold_start_s: float, idle: dict | None = None) -> dict:
+    """Recomputes the wake-up cost of a saved result with the measured cold start and idle time."""
+    idle = idle or idle_before_scale_down()
+    result["idle_before_scale_down"] = idle
+    for period in result["by_api_period"].values():
+        period["idle"]["min_instances_0_usd_per_wake"] = wake_usd(result["usd_per_hour"],
+                                                                  cold_start_s, idle["seconds"])
+        period["idle"]["wake_assumes_s"] = {"cold_start": cold_start_s,
+                                            "idle_before_scale_down": idle["seconds"]}
+    result["current"] = result["by_api_period"][next(iter(result["by_api_period"]))]
+    return result
 
 
 def main() -> None:

@@ -27,7 +27,8 @@ from vllm_lab import cli
 PERIOD_S = 10
 FAILURE_THRESHOLD = 150
 TIMEOUT_S = 5
-# Measured cold start with weights mounted from a bucket (experiment 01): 580 s, 9.7 min.
+# Fallback when this file runs alone. verify_production.py passes the cold start that experiment 01
+# measures from data/startup_log.txt (580.4 s with weights mounted from a bucket).
 MEASURED_COLD_START_S = 580
 
 
@@ -76,7 +77,7 @@ def probe_budget(period_s: int = PERIOD_S, failure_threshold: int = FAILURE_THRE
     }
 
 
-def run(base_url: str) -> dict:
+def run(base_url: str, cold_start_s: float = MEASURED_COLD_START_S) -> dict:
     root = cli.root_of(base_url)
     health = timed_get(root + "/health")
     models = timed_get(base_url + "/models")
@@ -92,7 +93,7 @@ def run(base_url: str) -> dict:
                    "weights": model.get("root"), "max_model_len": model.get("max_model_len")},
         "version": {"status": version["status"], "ms": version["ms"], "vllm": vllm_version},
         "readiness": ready(base_url, model.get("id", "gemma")),
-        "startup_probe": probe_budget(),
+        "startup_probe": probe_budget(cold_start_s=cold_start_s),
     }
 
 

@@ -1,0 +1,23 @@
+# Instance lifecycle of the vllm-gemma service on 2026-11-11 (Cloud Logging, newest first, as gcloud prints).
+# gcloud logging read 'resource.type="cloud_run_revision" AND resource.labels.service_name="vllm-gemma" AND (textPayload:"Starting new instance" OR textPayload:"Shutting down" OR textPayload:"STARTUP HTTP probe succeeded")' --format='value(timestamp,resource.labels.revision_name,textPayload)'
+# vllm-gemma-00010-bmh is the min-instances 0 revision that `make cool` deployed at 18:01:28; its logs show no request.
+2026-11-11T18:26:14.723574Z	vllm-gemma-00009-k8l	INFO:     Shutting down
+2026-11-11T18:26:14.723331Z	vllm-gemma-00009-k8l	(APIServer pid=1) INFO 11-11 18:26:14 [launcher.py:306] [shutdown] API server: shutting down FastAPI HTTP server
+2026-11-11T18:21:15.302635Z	vllm-gemma-00010-bmh	INFO:     Shutting down
+2026-11-11T18:21:15.302506Z	vllm-gemma-00010-bmh	(APIServer pid=1) INFO 11-11 18:21:15 [launcher.py:306] [shutdown] API server: shutting down FastAPI HTTP server
+2026-11-11T18:11:01.346376Z	vllm-gemma-00010-bmh	STARTUP HTTP probe succeeded after 58 attempts for container "vllm-openai-1" on port 8080 path "/health".
+2026-11-11T18:07:38.762107Z	vllm-gemma-00009-k8l	INFO:     Shutting down
+2026-11-11T18:07:38.761902Z	vllm-gemma-00009-k8l	(APIServer pid=1) INFO 11-11 18:07:38 [launcher.py:306] [shutdown] API server: shutting down FastAPI HTTP server
+2026-11-11T18:01:30.941557Z	vllm-gemma-00010-bmh	Starting new instance. Reason: DEPLOYMENT_ROLLOUT - Instance started due to traffic shifting between revisions due to deployment, traffic split adjustment, or deployment health check.
+2026-11-11T17:55:32.680871Z	vllm-gemma-00009-k8l	STARTUP HTTP probe succeeded after 55 attempts for container "vllm-openai-1" on port 8080 path "/health".
+2026-11-11T17:46:32.256183Z	vllm-gemma-00009-k8l	Starting new instance. Reason: AUTOSCALING - Instance started due to configured scaling factors (e.g. CPU utilization, request throughput, etc.) or no existing capacity for current traffic.
+2026-11-11T17:40:43.368468Z	vllm-gemma-00007-fb4	INFO:     Shutting down
+2026-11-11T17:40:43.368265Z	vllm-gemma-00007-fb4	(APIServer pid=1) INFO 11-11 17:40:43 [launcher.py:306] [shutdown] API server: shutting down FastAPI HTTP server
+2026-11-11T17:37:39.542402Z	vllm-gemma-00009-k8l	STARTUP HTTP probe succeeded after 59 attempts for container "vllm-openai-1" on port 8080 path "/health".
+2026-11-11T17:35:39.046852Z	vllm-gemma-00008-pvw	INFO:     Shutting down
+2026-11-11T17:35:39.046630Z	vllm-gemma-00008-pvw	(APIServer pid=1) INFO 11-11 17:35:39 [launcher.py:306] [shutdown] API server: shutting down FastAPI HTTP server
+2026-11-11T17:27:59.191901Z	vllm-gemma-00009-k8l	Starting new instance. Reason: MANUAL_OR_CUSTOMER_MIN_INSTANCE - Instance started because of customer-configured min-instances or manual scaling.
+2026-11-11T17:25:26.733421Z	vllm-gemma-00008-pvw	STARTUP HTTP probe succeeded after 57 attempts for container "vllm-openai-1" on port 8080 path "/health".
+2026-11-11T17:16:06.364215Z	vllm-gemma-00008-pvw	Starting new instance. Reason: DEPLOYMENT_ROLLOUT - Instance started due to traffic shifting between revisions due to deployment, traffic split adjustment, or deployment health check.
+2026-11-11T17:06:13.085100Z	vllm-gemma-00007-fb4	STARTUP HTTP probe succeeded after 64 attempts for container "vllm-openai-1" on port 8080 path "/health".
+2026-11-11T16:55:42.671035Z	vllm-gemma-00007-fb4	Starting new instance. Reason: DEPLOYMENT_ROLLOUT - Instance started due to traffic shifting between revisions due to deployment, traffic split adjustment, or deployment health check.

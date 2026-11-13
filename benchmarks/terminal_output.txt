@@ -16,5 +16,5 @@ Experiment                       | Measured                                     
 ------------------------------------------------------------------------------------------------------------------
 Instance: Cloud Run, 1 NVIDIA L4 (sin redundancia zonal), 8 vCPU, 32 GiB, instance-based billing, $1.4209/h list price checked 2026-11-10.
 API     : gemini-3.8-flash (Gemini Developer API, nivel de pago, texto, sin batch), $5.25 per 1M output with 2.0 input tokens each, checked 2026-11-10.
-Idle    : min-instances 1 $1037.26/month; min-instances 0 $0 idle, $0.584 per wake.
+Idle    : min-instances 1 $1037.26/month; min-instances 0 $0 idle, $0.471 per wake.
 ALL CHECKS PASSED.

@@ -10,6 +10,6 @@
   "source": "https://cloud.google.com/run/pricing",
   "note": "Precio de lista Tier 1, sin descuentos ni capa gratuita. Revisa la página antes de decidir; cambia por región y con el tiempo.",
   "billing_assumption": "Con GPU, Cloud Run cobra la instancia completa mientras existe (instance-based billing): una instancia mínima inactiva cuesta lo mismo por hora que una ocupada. Por confirmar en la factura de la corrida en vivo.",
-  "idle_before_scale_down_s": 900,
-  "idle_before_scale_down_note": "Cota superior: Cloud Run puede mantener una instancia sin tráfico hasta 15 minutos antes de apagarla, y ese tiempo se cobra. Por confirmar con la corrida en vivo."
+  "idle_before_scale_down_upper_bound_s": 900,
+  "idle_before_scale_down_note": "Cota superior: Cloud Run puede mantener una instancia sin tráfico hasta 15 minutos antes de apagarla, y ese tiempo se cobra. El experimento 05 no usa esta cota: mide el tiempo en data/instance_lifecycle_log.txt (614 s, 10.2 min, revisión sin tráfico del 2026-11-11)."
 }

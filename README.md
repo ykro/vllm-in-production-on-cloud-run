@@ -112,8 +112,8 @@ Los dos archivos están en `benchmarks/pricing.json` y `benchmarks/api_prices.js
 - **Por token y por día son preguntas distintas.** Con 8 usuarios a la vez la misma L4 escribe varias veces más tokens por hora que con uno, así que el costo por millón baja mucho. Ese número solo vale si la GPU está ocupada; una instancia mínima encendida cuesta lo mismo por hora con tráfico o sin él.
 - **La API cobra también la entrada.** El experimento 05 suma 2 tokens de entrada por cada token de salida (configurable con `--input-per-output`). En tu GPU el prefill ya está dentro del precio por hora.
 - **Break-even.** Es el número de tokens de salida por día a partir del cual `min-instances 1` (la L4 las 24 horas) cuesta menos que la API. El experimento también dice qué fracción de la capacidad de una instancia representa; si pasa del 100 %, una sola L4 no alcanza.
-- **`min-instances 0`.** No cobra en reposo, pero cada vez que despierta paga el cold start más el tiempo que Cloud Run mantiene la instancia sin tráfico antes de apagarla (hasta 15 minutos). El experimento lo reporta como costo por despertar.
-- **Supuestos por confirmar.** Que una instancia mínima inactiva con GPU se cobre a la tarifa completa y el tiempo exacto antes de apagarse (los 15 minutos que usa el costo por despertar) siguen marcados así en `benchmarks/pricing.json`: no se vieron en una factura. Los nombres de las métricas de `/metrics` sí se confirmaron en vLLM 0.33.0. La cifra de headroom de la startup probe (2.94 veces) se calculó con el cold start de 510 s de Hugging Face; con los 580 s medidos ahora son 2.59 veces, y la constante del experimento ya usa 580.
+- **`min-instances 0`.** No cobra en reposo, pero cada vez que despierta paga el cold start más el tiempo que Cloud Run mantiene la instancia sin tráfico antes de apagarla. Cloud Run admite hasta 15 minutos; en la corrida, la revisión sin tráfico que dejó `make cool` se apagó 614 s (10.2 min) después de pasar su startup probe (`data/instance_lifecycle_log.txt`). Con los 580 s de arranque, el experimento reporta unos **USD 0.47 por despertar**.
+- **Supuestos por confirmar.** Que una instancia mínima inactiva con GPU se cobre a la tarifa completa sigue marcado así en `benchmarks/pricing.json`: no se vio en una factura. Los 10.2 minutos antes de apagarse salen de una sola instancia; Cloud Run no promete ese tiempo. Los nombres de las métricas de `/metrics` sí se confirmaron en vLLM 0.33.0. El presupuesto de la startup probe (1,500 s) da 2.58 veces los 580 s medidos; `verify_production.py` le pasa al experimento 02 el cold start que mide el 01.
 
 ---
 
@@ -125,6 +125,7 @@ Los dos archivos están en `benchmarks/pricing.json` y `benchmarks/api_prices.js
 │   ├── pricing.json                     # Precio de lista de la instancia de Cloud Run con L4
 │   └── api_prices.json                  # Precio de lista de la API Gemini Flash, con fecha y fuente
 ├── data/
+│   ├── instance_lifecycle_log.txt       # Arranques, probes y apagados de las instancias (tiempo antes de apagarse)
 │   ├── startup_log.txt                  # (no versionado) log completo de make logs
 │   ├── startup_log_v033_excerpt.txt     # Extracto del log real de vLLM 0.33.0 (lo usa un test)
 │   └── startup_log_sample.txt           # Log de ejemplo con el formato anterior; lo lee --mock

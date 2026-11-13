@@ -66,12 +66,17 @@ def main() -> int:
         saved = json.loads((ROOT / "benchmarks" / "latest_results.json").read_text())
         res = dict(saved["experiments"])
         res[EXPERIMENTS[0]] = mods[EXPERIMENTS[0]].run(log, args.compare_log)
+        cold = res[EXPERIMENTS[0]]["total_s"]
+        # 02 and 05 depend on the cold start and the idle time: recompute them from the logs.
+        res[EXPERIMENTS[1]]["startup_probe"] = mods[EXPERIMENTS[1]].probe_budget(cold_start_s=cold)
+        res[EXPERIMENTS[4]] = mods[EXPERIMENTS[4]].refresh_idle(res[EXPERIMENTS[4]], cold)
         base_url = None
     else:
         base_url = cli.resolve(args)
+        r01 = mods[EXPERIMENTS[0]].run(log, args.compare_log)
         res = {
-            EXPERIMENTS[0]: mods[EXPERIMENTS[0]].run(log, args.compare_log),
-            EXPERIMENTS[1]: mods[EXPERIMENTS[1]].run(base_url),
+            EXPERIMENTS[0]: r01,
+            EXPERIMENTS[1]: mods[EXPERIMENTS[1]].run(base_url, cold_start_s=r01["total_s"]),
             EXPERIMENTS[2]: mods[EXPERIMENTS[2]].run(base_url),
             EXPERIMENTS[3]: (mods[EXPERIMENTS[3]].run(base_url, users=args.users or 24,
                                                       duration_s=args.duration or 4.0)

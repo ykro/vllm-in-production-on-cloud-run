@@ -71,9 +71,7 @@
         "compile_s": 53.73,
         "cuda_graphs_s": 17.0
       },
-      "missing_events": [
-        "weights_downloaded"
-      ],
+      "missing_events": [],
       "slowest_phase": "load_weights_to_gpu",
       "phases_sum_s": 580.351,
       "total_s": 580.351
@@ -103,10 +101,10 @@
       "startup_probe": {
         "flag": "--startup-probe httpGet.path=/health,httpGet.port=8080,periodSeconds=10,failureThreshold=150,timeoutSeconds=5",
         "budget_s": 1500,
-        "measured_cold_start_s": 510,
-        "headroom_x": 2.94,
+        "measured_cold_start_s": 580.351,
+        "headroom_x": 2.58,
         "fits": true,
-        "probes_until_ready": 51,
+        "probes_until_ready": 58,
         "rule": "budget >= 2x the slowest cold start you have measured"
       }
     },
@@ -466,10 +464,10 @@
         "idle": {
           "min_instances_0_usd_per_month_idle": 0.0,
           "min_instances_1_usd_per_month": 1037.26,
-          "min_instances_0_usd_per_wake": 0.584,
+          "min_instances_0_usd_per_wake": 0.471,
           "wake_assumes_s": {
             "cold_start": 580.351,
-            "idle_before_scale_down": 900
+            "idle_before_scale_down": 614.0
           }
         },
         "breakeven_tokens_per_day": 6495543,
@@ -483,10 +481,10 @@
           "idle": {
             "min_instances_0_usd_per_month_idle": 0.0,
             "min_instances_1_usd_per_month": 1037.26,
-            "min_instances_0_usd_per_wake": 0.584,
+            "min_instances_0_usd_per_wake": 0.471,
             "wake_assumes_s": {
               "cold_start": 580.351,
-              "idle_before_scale_down": 900
+              "idle_before_scale_down": 614.0
             }
           },
           "breakeven_tokens_per_day": 6495543,
@@ -499,10 +497,10 @@
           "idle": {
             "min_instances_0_usd_per_month_idle": 0.0,
             "min_instances_1_usd_per_month": 1037.26,
-            "min_instances_0_usd_per_wake": 0.584,
+            "min_instances_0_usd_per_wake": 0.471,
             "wake_assumes_s": {
               "cold_start": 580.351,
-              "idle_before_scale_down": 900
+              "idle_before_scale_down": 614.0
             }
           },
           "breakeven_tokens_per_day": 3247771,
@@ -510,6 +508,13 @@
           "breakeven_reachable": true,
           "gpu_cheaper_per_token_at_full_load": true
         }
+      },
+      "idle_before_scale_down": {
+        "log": "data/instance_lifecycle_log.txt",
+        "revision": "vllm-gemma-00010-bmh",
+        "probe_succeeded_at": "2026-11-11T18:11:01.346376+00:00",
+        "shutting_down_at": "2026-11-11T18:21:15.302635+00:00",
+        "seconds": 614.0
       }
     }
   },
