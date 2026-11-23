@@ -248,6 +248,7 @@ def metrics_text(inst: Instance) -> str:
 
 class _MockServer(ThreadingHTTPServer):
     daemon_threads = True
+    request_queue_size = 128
     cluster: Cluster
 
     def handle_error(self, request, client_address):  # clients closing keep-alive sockets
